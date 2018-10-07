@@ -9,11 +9,12 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.InputStream;
+import java.util.Map;
 
 public class CarDiagnosticEngine {
 
 	public void executeDiagnostics(Car car) {
-		/*
+        /*
 		 * Implement basic diagnostics and print results to console.
 		 *
 		 * The purpose of this method is to find any problems with a car's data or parts.
@@ -39,11 +40,57 @@ public class CarDiagnosticEngine {
 		 * console output is as least as informative as the provided methods.
 		 */
 
+        boolean                 foundError;
+        Map<PartType, Integer>  missingPartsMap;
+
+        foundError      = false;
+        missingPartsMap = null;
+
+        if (car.getYear() == null) {
+            printMissingField("year");
+            foundError = true;
+        }
+        if (car.getMake() == null) {
+            printMissingField("make");
+            foundError = true;
+        }
+        if (car.getModel() == null) {
+            printMissingField("model");
+            foundError = true;
+        }
+        if (foundError) { System.exit(2); }
+
+        missingPartsMap = car.getMissingPartsMap();
+        if (missingPartsMap != null) {
+            for (PartType pt : PartType.values()) {
+                if (missingPartsMap.get(pt) != null) {
+                    printMissingPart(pt, missingPartsMap.get(pt));
+                    foundError = true;
+                }
+            }
+        }
+        if (foundError) { System.exit(3); }
+
+        for (Part part : car.getParts()) {
+            if (part.isInWorkingCondition() == false) {
+                printDamagedPart(part.getType(), part.getCondition());
+                foundError = true;
+            }
+        }
+        if (foundError) { System.exit(4); }
+
+        System.out.println("Car passes all diagnostic tests");
+
 
 	}
 
+	private void printMissingField(String missingField) {
+	    if (missingField == null) throw new IllegalArgumentException("MissingField must not be null");
+        System.out.println(String.format("Missing Field Detected: %s", missingField));
+    }
+
 	private void printMissingPart(PartType partType, Integer count) {
-		if (partType == null) throw new IllegalArgumentException("PartType must not be null");
+        if (partType == null) throw new IllegalArgumentException("PartType must not be null");
 		if (count == null || count <= 0) throw new IllegalArgumentException("Count must be greater than 0");
 
 		System.out.println(String.format("Missing Part(s) Detected: %s - Count: %s", partType, count));
@@ -57,28 +104,28 @@ public class CarDiagnosticEngine {
 	}
 
 	public static void main(String[] args) throws JAXBException {
-		// Load classpath resource
-		InputStream xml = ClassLoader.getSystemResourceAsStream("SampleCar.xml");
+        // Load classpath resource
+        try (InputStream xml = ClassLoader.getSystemResourceAsStream("SampleCar1.xml")) {
 
-		// Verify resource was loaded properly
-		if (xml == null) {
-			System.err.println("An error occurred attempting to load SampleCar.xml");
+            // Verify resource was loaded properly
+            if (xml == null) {
+                System.err.println("An error occurred attempting to load SampleCar.xml");
 
-			System.exit(1);
-		}
+                System.exit(1);
+            }
 
-		// Build JAXBContext for converting XML into an Object
-		JAXBContext context = JAXBContext.newInstance(Car.class, Part.class);
-		Unmarshaller unmarshaller = context.createUnmarshaller();
+            // Build JAXBContext for converting XML into an Object
+            JAXBContext context = JAXBContext.newInstance(Car.class, Part.class);
+            Unmarshaller unmarshaller = context.createUnmarshaller();
 
-		Car car = (Car) unmarshaller.unmarshal(xml);
+            Car car = (Car) unmarshaller.unmarshal(xml);
 
-		// Build new Diagnostics Engine and execute on deserialized car object.
-
-		CarDiagnosticEngine diagnosticEngine = new CarDiagnosticEngine();
-
-		diagnosticEngine.executeDiagnostics(car);
-
-	}
+            // Build new Diagnostics Engine and execute on deserialized car object.
+            CarDiagnosticEngine diagnosticEngine = new CarDiagnosticEngine();
+            diagnosticEngine.executeDiagnostics(car);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
 }
