@@ -105,7 +105,7 @@ public class CarDiagnosticEngine {
 
 	public static void main(String[] args) throws JAXBException {
         // Load classpath resource
-        try (InputStream xml = ClassLoader.getSystemResourceAsStream("SampleCar1.xml")) {
+        try (InputStream xml = ClassLoader.getSystemResourceAsStream("SampleCar.xml")) {
 
             // Verify resource was loaded properly
             if (xml == null) {
